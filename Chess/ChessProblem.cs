@@ -29,9 +29,7 @@
 				}
 			}
 			if (isCheck)
-				if (hasMoves)
-					ChessStatus = ChessStatus.Check;
-				else ChessStatus = ChessStatus.Mate;
+				ChessStatus = hasMoves ? ChessStatus.Check : ChessStatus.Mate;
 			else if (hasMoves) ChessStatus = ChessStatus.Ok;
 			else ChessStatus = ChessStatus.Stalemate;
 		}
@@ -39,19 +37,17 @@
 		// check — это шах
 		private static bool IsCheckForWhite()
 		{
-			var isCheck = false;
 			foreach (var loc in board.GetPieces(PieceColor.Black))
 			{
 				var piece = board.GetPiece(loc);
 				var moves = piece.GetMoves(loc, board);
 				foreach (var destination in moves)
 				{
-					if (board.GetPiece(destination).Is(PieceColor.White, PieceType.King))
-						isCheck = true;
+				    if (board.GetPiece(destination).Is(PieceColor.White, PieceType.King))
+				        return true;
 				}
 			}
-			if (isCheck) return true;
-			return false;
+		    return false;
 		}
 	}
 }
