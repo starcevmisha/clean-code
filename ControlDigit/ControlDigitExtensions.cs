@@ -1,38 +1,69 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using NUnit.Framework;
 
 namespace ControlDigit
 {
-	public static class ControlDigitExtensions
-	{
-		public static int ControlDigit(this long number)
-		{
-			int sum = 0;
-			int factor = 1;
-			do
-			{
-				int digit = (int)(number % 10);
-				sum += factor * digit;
-				factor = 4 - factor;
-				number /= 10;
+    public static class ControlDigitExtensions
+    {
+        public static int ControlDigit(this long number)
+        {
+            int sum = 0;
+            int factor = 1;
+            do
+            {
+                int digit = (int) (number % 10);
+                sum += factor * digit;
+                factor = 4 - factor;
+                number /= 10;
+            } while (number > 0);
 
-			}
-			while (number > 0);
+            int result = sum % 11;
+            if (result == 10)
+                result = 1;
+            return result;
+        }
 
-			int result = sum % 11;
-			if (result == 10)
-				result = 1;
-			return result;
-		}
+        public static int ControlDigit2(this long number)
+        {
+            int controlSum = 0;
+            var digitsList = GetDigit(number).ToList();
+            var factorsList = GetFactor(digitsList.Count).ToList();
+            for (int i = 0; i < digitsList.Count; i++)
+            {
+                controlSum += digitsList[i] * factorsList[i];
+            }
 
-		public static int ControlDigit2(this long number)
-		{
-			throw new NotImplementedException();
-		}
-	}
+            int result = controlSum % 11;
+            if (result == 10)
+                result = 1;
+            return result;
+        }
 
-	[TestFixture]
+        public static IEnumerable<int> GetFactor(int length)
+        {
+            for (var i = 0; i < length / 2+1; i++)
+            {
+                yield return 1;
+                yield return 3;
+            }
+        }
+
+        public static IEnumerable<int> GetDigit(long number)
+        {
+            while (number > 0)
+            {
+                int digit = (int)(number % 10);
+                yield return digit;
+                number /= 10;
+            }
+        }
+    }
+
+    [TestFixture]
 	public class ControlDigitExtensions_Tests
 	{
 		[TestCase(0, ExpectedResult = 0)]
