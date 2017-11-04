@@ -30,7 +30,7 @@ namespace Markdown
         [TestCase("em", "hello world", ExpectedResult = "<em>hello world</em>")]
         public string ShouldInsertDataInToTags_WhenToStringCalls(string tag, string data)
         {
-            return new HtmlTag("em", "data").ToString();
+            return new HtmlTag("em", data).ToString();
         }
 
     }
