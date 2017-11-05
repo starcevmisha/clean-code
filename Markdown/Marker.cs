@@ -19,22 +19,22 @@ namespace Markdown
         public int Pos;
         public MarkerType Type;
 
-        public Marker(int pos, MarkerType type )
+        public Marker(int pos, MarkerType type, int length )
         {
             Pos = pos;
             Type = type;
-            Length = type == MarkerType.Em ? 1 : 2;
+            Length = length;
         }
 
 
         public static Marker CreateTag(string line, int pos)
         {
             if (IsStrongTag(line, pos))
-                return new Marker(pos, MarkerType.Strong);
+                return new Marker(pos, MarkerType.Strong, 2);
             if (IsEmTag(line, pos))
-                return new Marker(pos, MarkerType.Em);
+                return new Marker(pos, MarkerType.Em, 1);
             if (IsCodeTag(line, pos))
-                return new Marker(pos, MarkerType.Code);
+                return new Marker(pos, MarkerType.Code, 2);
             return null;
         }
 
@@ -43,7 +43,6 @@ namespace Markdown
             return line[pos] == '_' && pos < line.Length - 1 && line[pos + 1] == '_'
                 || line[pos] == '*' && pos < line.Length - 1 && line[pos + 1] == '*';
         }
-
         private static bool IsEmTag(string line, int pos)
         {
             return line[pos] == '_'

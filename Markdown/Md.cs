@@ -62,6 +62,12 @@ namespace Markdown
                         line = ConvertStrongTagFromStack(strongTagsPairs, line);
                     }
                     stackTag.Push(tag);
+                    if (tag.Type == MarkerType.Code)
+                    {
+                        var newIndex = line.IndexOf("``", i, StringComparison.Ordinal);
+                        if (newIndex > 0)
+                            i = newIndex - 1;
+                    }
                 }
             }
             line = ConvertStrongTagFromStack(strongTagsPairs, line);
@@ -104,6 +110,8 @@ namespace Markdown
             return new Md().RenderToHtml(markDown);
         }
         [TestCase(@"``hello`` world", ExpectedResult = "<code>hello</code> world")]
+        [TestCase(@"``_hello_`` world", ExpectedResult = "<code>_hello_</code> world")]
+        [TestCase(@"``_h__e`l`l__o_`` world", ExpectedResult = "<code>_h__e`l`l__o_</code> world")]
         public string ParseCodeTokens(string markDown)
         {
             return new Md().RenderToHtml(markDown);
