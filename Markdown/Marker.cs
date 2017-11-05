@@ -1,14 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using NUnit.Framework;
 
 namespace Markdown
 {
     public class Marker
     {
+
         static Dictionary<MarkerType, string> HtmlTags = new Dictionary<MarkerType, string>
         {
             {MarkerType.Strong, "<strong>"},
             {MarkerType.Em, "<em>" }
         };
+
         public int Length;
         public int Pos;
         public MarkerType Type;
@@ -43,20 +48,29 @@ namespace Markdown
 
         public static bool IsOpeningTag(string line, int pos)
         {
-            return pos < line.Length - 1 && line[pos + 1] != ' ';
+            return pos < line.Length - 1 && line[pos + 1] != ' ' && !IsInsideDigits(line, pos);
         }
         public static bool IsClosingTag(string line, int pos)
         {
-            return pos > 0 && line[pos - 1] != ' ';
+            return pos > 0 && line[pos - 1] != ' ' && !IsInsideDigits(line, pos);
         }
 
+        public static bool IsInsideDigits(string line, int pos)
+        {
+            return (pos+1 >= line.Length || char.IsDigit(line[pos + 1])) 
+                && (pos-1 < 0 || char.IsDigit(line[pos - 1]));
+        }
 
-        public static string ConvertToHtmlTag(string line, Marker closingTag, Stack<Marker> stackTag)
+        public static (Marker openingTag, Marker closingTag) GetTagsPair(string line, Marker closingTag, Stack<Marker> stackTag)
         {
             var openingTag = stackTag.Pop();
             while (openingTag.Type != closingTag.Type)
                 openingTag = stackTag.Pop();
+            return (openingTag, closingTag);
+        }
 
+        public static string ConvertToHtmlTag(string line, Marker openingTag, Marker closingTag)
+        {
             closingTag.Pos += HtmlTags[closingTag.Type].Length - closingTag.Length;
             line = line
                 .Remove(openingTag.Pos, openingTag.Length)
@@ -65,6 +79,19 @@ namespace Markdown
                 .Remove(closingTag.Pos, closingTag.Length)
                 .Insert(closingTag.Pos, HtmlTags[openingTag.Type].Insert(1, "/"));
             return line;
+        }
+    }
+
+    [TestFixture]
+    public class Marker_Should
+    {
+        [TestCase("q1_2_3", 2, ExpectedResult = true)]
+        [TestCase("_2_3", 0, ExpectedResult = true)]
+        [TestCase("23_", 2, ExpectedResult = true)]
+        [TestCase("q_w_e", 2, ExpectedResult = false)]
+        public bool IsInsideDigits_Tests(string line, int pos)
+        {
+            return Marker.IsInsideDigits(line, pos);
         }
     }
 
