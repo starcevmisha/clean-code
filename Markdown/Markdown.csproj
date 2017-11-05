@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HtmlTag.cs" />
+    <Compile Include="Marker.cs" />
     <Compile Include="Md.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>

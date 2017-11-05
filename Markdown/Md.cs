@@ -1,51 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using NUnit.Framework;
 
 namespace Markdown
 {
     public class Md
     {
-        public Dictionary<char, Func<string, int, HtmlTag>> tokenDict = new Dictionary<char, Func<string, int, HtmlTag>>
-        {
-            ['_'] = ParseEmToken
-        };
-        public List<HtmlTag> ResultHtml = new List<HtmlTag>();
 
-
-        private static HtmlTag ParseEmToken(string markdown, int startIndex)
-        {
-            var i = 1;
-            while (markdown[i + 1] != '_' && startIndex + i < markdown.Length)
-                i++;
-            return new HtmlTag("em", markdown.Substring(startIndex + 1, i));
-        }
-
-        private HtmlTag ParseWithoutToken(string markdown, int startIndex)
-        {
-            var i = 1;
-            while (startIndex + i < markdown.Length)
-            {
-                if (tokenDict.ContainsKey(markdown[i]))
-                    return new HtmlTag("", markdown.Substring(startIndex, i));
-                i++;
-            }
-            return new HtmlTag("", markdown.Substring(startIndex, i));
-        }
 
         public string RenderToHtml(string markdown)
         {
-            for (var i = 0; i < markdown.Length; i++)
-            {
-                var parseFunc = tokenDict.ContainsKey(markdown[i]) ? tokenDict[markdown[i]] : ParseWithoutToken;
-                var parsed = parseFunc(markdown, i);
-                i += parsed.Length+1;
-                ResultHtml.Add(parsed);
-            }
-            return string.Join("", ResultHtml);
+            var line = markdown;
 
+            var stackTag = new Stack<Marker>();
+            for (var i = 0; i <line.Length; i++)
+            {
+                if (line[i] == '\\')
+                {
+                   line = line.Remove(i, 1);
+                    i++;
+                }
+                var tag = Marker.CreateTag(line, i);
+                if (tag == null)
+                    continue;
+                i += tag.Length - 1;
+
+                if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type))
+                {
+                    line = Marker.ConvertToHtmlTag(line, tag, stackTag);
+                    continue;
+                }
+                if (Marker.IsOpeningTag(line, tag.Pos))
+                    stackTag.Push(tag);
+
+            }
+            return line;
         }
     }
 
