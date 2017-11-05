@@ -14,74 +14,31 @@ namespace Markdown
             var resultLine = new List<string>();
             foreach (var line in markdown.Split('\n'))
             {
-               resultLine.Add(ParseLine(line));
+                if (IsHeader(line))
+                    resultLine.Add(LineParser.Parse(CutLine(line)));
+                else
+                    resultLine.Add(LineParser.Parse(line));
             }
             return String.Join("\n", resultLine);
         }
 
-        private static string ParseLine(string markdown)
+        private static string CutLine(string line)
         {
-            var isInsideEmTags = false;
-            var strongTagsPairs = new Stack<(Marker, Marker)>();
-            var line = markdown;
-
-            var stackTag = new Stack<Marker>();
-            for (var i = 0; i < line.Length; i++)
-            {
-                if (line[i] == '\\')
-                {
-                    line = line.Remove(i, 1);
-                    i++;
-                }
-                var tag = Marker.CreateTag(line, i);
-                if (tag == null)
-                    continue;
-                i += tag.Length - 1;
-
-                if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type))
-                {
-                    var tags = Marker.GetTagsPair(line, tag, stackTag);
-                    if (tags.openingTag.Type == MarkerType.Em)
-                    {
-                        isInsideEmTags = false;
-                        strongTagsPairs.Clear();
-                    }
-                    else if (tags.openingTag.Type == MarkerType.Strong && isInsideEmTags)//Если двойное внутри одинарного то запоминаем и идем дальше
-                    {
-                        strongTagsPairs.Push(tags);
-                        continue;
-                    }
-                    line = Marker.ConvertToHtmlTag(line, tags.openingTag, tags.closingTag);
-                }
-
-                else if (Marker.IsOpeningTag(line, tag.Pos))
-                {
-                    if (tag.Type == MarkerType.Em)
-                    {
-                        isInsideEmTags = true;
-                        line = ConvertStrongTagFromStack(strongTagsPairs, line);
-                    }
-                    stackTag.Push(tag);
-                    if (tag.Type == MarkerType.Code)
-                    {
-                        var newIndex = line.IndexOf("``", i, StringComparison.Ordinal);
-                        if (newIndex > 0)
-                            i = newIndex - 1;
-                    }
-                }
-            }
-            line = ConvertStrongTagFromStack(strongTagsPairs, line);
-            return line;
+            var headerLevel = 0;
+            while (line[headerLevel] == '#') headerLevel++;
+            if (headerLevel > 3)
+                return line;
+            var i = line.Length - 1;
+            while (line[i] == '#') i--;
+            return (string.Format("<h{0}>{1}</h{0}>",
+                4-headerLevel,
+                line.Substring(headerLevel, i - headerLevel + 1)));
         }
-        private static string ConvertStrongTagFromStack(Stack<(Marker, Marker)> strongTagsPairs, string line)
+        private static bool IsHeader(string line)
         {
-            while (strongTagsPairs.Count > 0)
-            {
-                var tagsPair = strongTagsPairs.Pop();
-                line = Marker.ConvertToHtmlTag(line, tagsPair.Item1, tagsPair.Item2);
-            }
-            return line;
+            return line.Length > 0 && line[0] == '#';
         }
+        
     }
 
     [TestFixture]
@@ -111,6 +68,7 @@ namespace Markdown
         }
         [TestCase(@"``hello`` world", ExpectedResult = "<code>hello</code> world")]
         [TestCase(@"``_hello_`` world", ExpectedResult = "<code>_hello_</code> world")]
+        [TestCase(@"``_hello_`` ``world``", ExpectedResult = "<code>_hello_</code> <code>world</code>")]
         [TestCase(@"``_h__e`l`l__o_`` world", ExpectedResult = "<code>_h__e`l`l__o_</code> world")]
         public string ParseCodeTokens(string markDown)
         {
@@ -125,6 +83,15 @@ namespace Markdown
         public string ParseMixedStrongAndEmTokens(string markDown)
         {
             return new Md().RenderToHtml(markDown);
+        }
+
+        [TestCase("##Header", ExpectedResult = "<h2>Header</h2>")]
+        [TestCase("###Header#########", ExpectedResult = "<h1>Header</h1>")]
+        [TestCase("##_Header_", ExpectedResult = "<h2><em>Header</em></h2>")]
+        [TestCase("####Header", ExpectedResult = "####Header")]
+        public string ParseHeader(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
         }
 
 
