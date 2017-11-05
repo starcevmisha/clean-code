@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using NUnit.Framework;
 
 namespace Markdown
@@ -11,7 +11,12 @@ namespace Markdown
 
         public string RenderToHtml(string markdown)
         {
-            return ParseLine(markdown);
+            var resultLine = new List<string>();
+            foreach (var line in markdown.Split('\n'))
+            {
+               resultLine.Add(ParseLine(line));
+            }
+            return String.Join("\n", resultLine);
         }
 
         private static string ParseLine(string markdown)
@@ -62,7 +67,6 @@ namespace Markdown
             line = ConvertStrongTagFromStack(strongTagsPairs, line);
             return line;
         }
-
         private static string ConvertStrongTagFromStack(Stack<(Marker, Marker)> strongTagsPairs, string line)
         {
             while (strongTagsPairs.Count > 0)
@@ -96,6 +100,11 @@ namespace Markdown
         [TestCase("hello **world**", ExpectedResult = "hello <strong>world</strong>")]
         [TestCase(@"\__hello world", ExpectedResult = "__hello world")]
         public string ParseStrongTokens(string markDown)
+        {
+            return new Md().RenderToHtml(markDown);
+        }
+        [TestCase(@"``hello`` world", ExpectedResult = "<code>hello</code> world")]
+        public string ParseCodeTokens(string markDown)
         {
             return new Md().RenderToHtml(markDown);
         }

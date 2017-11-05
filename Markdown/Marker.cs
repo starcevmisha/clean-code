@@ -11,7 +11,8 @@ namespace Markdown
         static Dictionary<MarkerType, string> HtmlTags = new Dictionary<MarkerType, string>
         {
             {MarkerType.Strong, "<strong>"},
-            {MarkerType.Em, "<em>" }
+            {MarkerType.Em, "<em>" },
+            {MarkerType.Code, "<code>"}
         };
 
         public int Length;
@@ -22,7 +23,7 @@ namespace Markdown
         {
             Pos = pos;
             Type = type;
-            Length = type == MarkerType.Strong ? 2 : 1;
+            Length = type == MarkerType.Em ? 1 : 2;
         }
 
 
@@ -32,6 +33,8 @@ namespace Markdown
                 return new Marker(pos, MarkerType.Strong);
             if (IsEmTag(line, pos))
                 return new Marker(pos, MarkerType.Em);
+            if (IsCodeTag(line, pos))
+                return new Marker(pos, MarkerType.Code);
             return null;
         }
 
@@ -40,10 +43,15 @@ namespace Markdown
             return line[pos] == '_' && pos < line.Length - 1 && line[pos + 1] == '_'
                 || line[pos] == '*' && pos < line.Length - 1 && line[pos + 1] == '*';
         }
+
         private static bool IsEmTag(string line, int pos)
         {
             return line[pos] == '_'
                 || line[pos] == '*';
+        }
+        private static bool IsCodeTag(string line, int pos)
+        {
+            return line[pos] == '`' && pos < line.Length - 1 && line[pos + 1] == '`';
         }
 
         public static bool IsOpeningTag(string line, int pos)
@@ -93,11 +101,30 @@ namespace Markdown
         {
             return Marker.IsInsideDigits(line, pos);
         }
+
+        [TestCase("_qwerty", 0, ExpectedResult = true)]
+        [TestCase("qw _erty", 4, ExpectedResult = true)]
+        [TestCase("qwe1_3rty", 4, ExpectedResult = false)]
+        [TestCase("qwer_ ty", 4, ExpectedResult = false)]
+        public bool IsOpeningTag_Tests(string line, int pos)
+        {
+            return Marker.IsOpeningTag(line, pos);
+        }
+        [TestCase("_qwerty", 0, ExpectedResult = false)]
+        [TestCase("_qw _erty", 4, ExpectedResult = false)]
+        [TestCase("qwe1_3rty", 4, ExpectedResult = false)]
+        [TestCase("qwer_ ty", 4, ExpectedResult = true)]
+        [TestCase("qwerty_", 6, ExpectedResult = true)]
+        public bool IsClosingTag_Tests(string line, int pos)
+        {
+            return Marker.IsClosingTag(line, pos);
+        }
     }
 
     public enum MarkerType
     {
         Strong,
-        Em
+        Em,
+        Code
     }
 }
