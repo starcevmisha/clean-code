@@ -32,12 +32,13 @@ namespace Markdown
 
         private static bool IsStrongTag(string line, int pos)
         {
-            return (line[pos] == '_' && pos < line.Length - 1 && line[pos + 1] == '_') ||
-                   (line[pos] == '*' && pos < line.Length - 1 && line[pos + 1] == '*');
+            return line[pos] == '_' && pos < line.Length - 1 && line[pos + 1] == '_'
+                || line[pos] == '*' && pos < line.Length - 1 && line[pos + 1] == '*';
         }
         private static bool IsEmTag(string line, int pos)
         {
-            return line[pos] == '_';
+            return line[pos] == '_'
+                || line[pos] == '*';
         }
 
         public static bool IsOpeningTag(string line, int pos)
@@ -64,7 +65,6 @@ namespace Markdown
                 .Remove(closingTag.Pos, closingTag.Length)
                 .Insert(closingTag.Pos, HtmlTags[openingTag.Type].Insert(1, "/"));
             return line;
-
         }
     }
 

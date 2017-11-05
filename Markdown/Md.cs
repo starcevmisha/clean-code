@@ -32,7 +32,6 @@ namespace Markdown
                 }
                 if (Marker.IsOpeningTag(line, tag.Pos))
                     stackTag.Push(tag);
-
             }
             return line;
         }
@@ -49,12 +48,27 @@ namespace Markdown
         }
 
         [TestCase("_qwertyqwerty_", ExpectedResult = "<em>qwertyqwerty</em>")]
-        [TestCase("_hello world_", ExpectedResult = "<em>hello world</em>")]
-        [TestCase("_hello_ world", ExpectedResult = "<em>hello</em> world")]
+        [TestCase("_hello_ _world", ExpectedResult = "<em>hello</em> _world")]
+        [TestCase(@"_hello\_world_", ExpectedResult = "<em>hello_world</em>")]
         public string ParseEmTokens(string markDown)
         {
             return new Md().RenderToHtml(markDown);
         }
+        [TestCase("__hello world__", ExpectedResult = "<strong>hello world</strong>")]
+        [TestCase("hello **world**", ExpectedResult = "hello <strong>world</strong>")]
+        [TestCase(@"\__hello world", ExpectedResult = "__hello world")]
+        public string ParseStrongTokens(string markDown)
+        {
+            return new Md().RenderToHtml(markDown);
+        }
+
+        [TestCase("_a __a__ a_", ExpectedResult = "<em>a __a__ a</em>")]//Внутри одинарного двойное не работает
+        [TestCase("__a _a_ a__", ExpectedResult = "<strong>a <em>a</em> a</strong>")]//Внутри двойного одинарное работает
+        public string ParseMixedStrongAndEmTokens(string markDown)
+        {
+            return new Md().RenderToHtml(markDown);
+        }
+
 
 
     }
