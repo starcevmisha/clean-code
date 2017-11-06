@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Markdown
 {
-    public class LineParser
+    public class LineElement
     {
         public static string Parse(string markdown)
         {

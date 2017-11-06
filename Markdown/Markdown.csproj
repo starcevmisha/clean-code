@@ -50,9 +50,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LineParser.cs" />
+    <Compile Include="LineElement.cs" />
     <Compile Include="Marker.cs" />
     <Compile Include="Md.cs" />
+    <Compile Include="BlockElement.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
