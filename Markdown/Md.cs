@@ -19,18 +19,16 @@ namespace Markdown
                 var type = BlockElement.GetBlockType(line);
                 if (oldBlockType != type)
                 {
-                    //TODO Закрыть старый блок и открыть новый
+                    resultLine.Append(BlockElement.CloseLastBlock(oldBlockType));
+                    resultLine.Append(BlockElement.OpenNewBlock(type));
                 }
 
                 resultLine.Append(BlockElement.GetLine(line, type));
-
-//                if (BlockElement.IsHeader(line))
-//                    resultLine.Add(LineElement.Parse(BlockElement.Parse(line)));
-//                else
-//                    resultLine.Add(LineElement.Parse(line));
                 resultText.Add(LineElement.Parse(resultLine.ToString()));
                 oldBlockType = type;
             }
+            if(BlockElement.CloseLastBlock(oldBlockType) != "")
+                resultText.Add(BlockElement.CloseLastBlock(oldBlockType));
             return string.Join("\n", resultText);
         }
 
@@ -87,6 +85,38 @@ namespace Markdown
         [TestCase("##_Header_", ExpectedResult = "<h2><em>Header</em></h2>")]
         [TestCase("####Header", ExpectedResult = "####Header")]
         public string ParseHeader(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
+        }
+
+        [TestCase("    Code", ExpectedResult = "<pre><code>Code\n</code></pre>")]
+        [TestCase("\tCode", ExpectedResult = "<pre><code>Code\n</code></pre>")]
+        public string ParseCodeBlock(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
+        }
+        [TestCase("Hello\nWorld", ExpectedResult = "<p>Hello\nWorld\n</p>")]
+        [TestCase("Hello\n\nWorld", ExpectedResult = "<p>Hello\n</p>\n<p>World\n</p>")]
+        public string ParseParagraphBlock(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
+        }
+        [TestCase("1. QWERT", ExpectedResult = "<ul>\n<li>QWERT</li>\n</ul>")]
+        [TestCase("+ QWERT\n+ YUIOP", ExpectedResult = "<ul>\n<li>QWERT</li>\n<li>YUIOP</li>\n</ul>")]
+        [TestCase("1. QWERT\n23. YUIOP", ExpectedResult = "<ul>\n<li>QWERT</li>\n<li>YUIOP</li>\n</ul>")]
+        public string ParseListBlock(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
+        }
+        [TestCase("> Hello", ExpectedResult = "<blockquote>\n<p>Hello\n</p>\n</blockquote>")]
+        [TestCase("> Hello\n> World", ExpectedResult = "<blockquote>\n<p>Hello\nWorld\n</p>\n</blockquote>")]
+        public string ParseBlockQuotes(string markdown)
+        {
+            return new Md().RenderToHtml(markdown);
+        }
+
+        [TestCase("Hello\n---------\nWorld", ExpectedResult = "<p>Hello\n</p><hr />\n<p>World\n</p>")]
+        public string ParseHorizontalRule(string markdown)
         {
             return new Md().RenderToHtml(markdown);
         }

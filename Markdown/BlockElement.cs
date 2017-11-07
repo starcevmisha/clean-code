@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 
 namespace Markdown
 {
     public static class BlockElement
     {
+        private static readonly Regex ListRegex = new Regex(@"^(?:\d+\.|\+) (.*)");
+        private static readonly Regex BlockQuotesRegex = new Regex(@"^>{1,4} (.+)");
+        private static readonly Regex HorizontalRuleRegex = new Regex(@"^(?:\*{3,}|-{3,})$");
 
         public static string Parse(string line)
         {
-            var lineType = GetBlockType(line);
-
             var headerLevel = 0;
             while (line[headerLevel] == '#') headerLevel++;
             if (headerLevel > 3)
@@ -21,6 +23,23 @@ namespace Markdown
                 line.Substring(headerLevel, i - headerLevel + 1));
         }
 
+        public static string OpenNewBlock(BlockType newBlockType)
+        {
+            if (newBlockType == BlockType.Code) return "<pre><code>";
+            if (newBlockType == BlockType.BlockQuotes) return "<blockquote>\n<p>";
+            if (newBlockType == BlockType.List) return "<ul>\n";
+            if (newBlockType == BlockType.Paragraph) return "<p>";
+            return "";
+        }
+
+        public static string CloseLastBlock(BlockType lastBlockType)
+        {
+            if (lastBlockType == BlockType.Code) return "</code></pre>";
+            if (lastBlockType == BlockType.List) return "</ul>";
+            if (lastBlockType == BlockType.BlockQuotes) return "</p>\n</blockquote>";
+            if (lastBlockType == BlockType.Paragraph) return "</p>";
+            return "";
+        }
 
 
         public static BlockType GetBlockType(string line)
@@ -28,6 +47,8 @@ namespace Markdown
             if (IsHeader(line)) return BlockType.Header;
             if (IsList(line)) return BlockType.List;
             if (IsCode(line)) return BlockType.Code;
+            if (IsBlockQuotes(line)) return BlockType.BlockQuotes;
+            if (IsHorizontalRules(line)) return BlockType.HorizontalRule;
             if (IsParagraph(line)) return BlockType.Paragraph;
             return BlockType.Empty;
         }
@@ -40,17 +61,27 @@ namespace Markdown
         public static bool IsCode(string line)
         {
             return line.Length > 0 && line[0] == '\t'
-                || line.Length > 3 && line.StartsWith("    ");
+                   || line.Length > 3 && line.StartsWith("    ");
         }
 
         public static bool IsList(string line)
         {
-            return line.Length > 2 && char.IsDigit(line[0]) && line[1] == '.' && line[2]==' ';
+            return ListRegex.IsMatch(line);
         }
 
         public static bool IsHeader(string line)
         {
             return line.Length > 0 && line[0] == '#';
+        }
+
+        public static bool IsHorizontalRules(string line)
+        {
+            return HorizontalRuleRegex.IsMatch(line);
+        }
+
+        public static bool IsBlockQuotes(string line)
+        {
+            return BlockQuotesRegex.IsMatch(line);
         }
 
         public static string GetLine(string line, BlockType type)
@@ -67,7 +98,21 @@ namespace Markdown
                     4 - headerLevel,
                     line.Substring(headerLevel, i - headerLevel + 1));
             }
-            return null;
+            if (type == BlockType.Code)
+            {
+                if (line[0] == '\t')
+                    return line.Substring(1);
+                return line.Substring(4);
+            }
+            if (type == BlockType.List)
+                return $"<li>{ListRegex.Match(line).Groups[1]}</li>";
+
+            if (type == BlockType.BlockQuotes)
+                return BlockQuotesRegex.Match(line).Groups[1].ToString();
+            if (type == BlockType.HorizontalRule)
+                return "<hr />";
+            return line;
+            
         }
     }
 
@@ -78,15 +123,18 @@ namespace Markdown
         Code,
         List,
         BlockQuotes,
-        Empty
-
+        Empty,
+        HorizontalRule
     }
 
     [TestFixture]
     public class BlockElement_Should
     {
         [TestCase("1. QWerty", ExpectedResult = true)]
+        [TestCase("123. QWerty", ExpectedResult = true)]
+        [TestCase("+ QW", ExpectedResult = true)]
         [TestCase("1.QWerty", ExpectedResult = false)]
+        [TestCase("QWe 1. QWerty", ExpectedResult = false)]
         public bool IsList_Test(string line)
         {
             return BlockElement.IsList(line);
@@ -99,6 +147,7 @@ namespace Markdown
         {
             return BlockElement.IsCode(line);
         }
+
         [TestCase("##QWerty", ExpectedResult = true)]
         [TestCase("QWerty", ExpectedResult = false)]
         public bool IsHeader_Test(string line)
@@ -106,5 +155,22 @@ namespace Markdown
             return BlockElement.IsHeader(line);
         }
 
+        [TestCase("> QWerty", ExpectedResult = true)]
+        [TestCase(">> QWerty", ExpectedResult = true)]
+        [TestCase(">>>>> QWerty", ExpectedResult = false)]
+        [TestCase(" >> QWerty", ExpectedResult = false)]
+        [TestCase(">>QWerty", ExpectedResult = false)]
+        public bool IsBlockQuotes_Test(string line)
+        {
+            return BlockElement.IsBlockQuotes(line);
+        }
+        [TestCase("--------", ExpectedResult = true)]
+        [TestCase("**********", ExpectedResult = true)]
+        [TestCase("---   ew", ExpectedResult = false)]
+        [TestCase(" ** fdg", ExpectedResult = false)]
+        public bool IsHorizontalRule_Test(string line)
+        {
+            return BlockElement.IsHorizontalRules(line);
+        }
     }
 }
