@@ -17,30 +17,36 @@ namespace Markdown
                 if (line[i] == '\\')
                 {
                     line = line.Remove(i, 1);
-                    i++;
+                    continue;
                 }
-                var tag = Marker.CreateTag(line, i,stackTag.Count>0?stackTag.Peek():null);
+                var tag = Marker.CreateTag(line, i, stackTag.Count > 0 ? stackTag.Peek() : null);
                 if (tag == null)
                     continue;
                 i += tag.Length - 1;
+
                 if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type)
                     && !IsRepeatTag(tag, stackTag.Peek())) 
                 {
                     var tags = Marker.GetTagsPair(line, tag, stackTag);
                     line = Marker.ConvertToHtmlTag(line, tags.openingTag, tags.closingTag);
                 }
+
                 else if (Marker.IsOpeningTag(line, tag.Pos))
                 {
                     stackTag.Push(tag);
                     if (tag.Type == MarkerType.Code)
-                    {
-                        var newIndex = line.IndexOf("``", i, StringComparison.Ordinal);
-                        if (newIndex > 0)
-                            i = newIndex - 1;
-                    }
+                        i = SkipCode(line, i);
                 }
             }
             return line;
+        }
+
+        private static int SkipCode(string line, int i)
+        {
+            var newIndex = line.IndexOf("``", i, StringComparison.Ordinal);
+            if (newIndex > 0)
+                i = newIndex - 1;
+            return i;
         }
 
         private static bool IsRepeatTag(Marker tag, Marker peek)//Чтобы два подряд двойных подчеркивания расчитывались как два открывающих, а не как открывающий и закрывающий
@@ -54,6 +60,8 @@ namespace Markdown
     {
         [TestCase("qwertyqwerty", ExpectedResult = "qwertyqwerty")]
         [TestCase("hello world", ExpectedResult = "hello world")]
+        [TestCase(@"\\", ExpectedResult = @"\")]
+        [TestCase(@"\a", ExpectedResult = @"a")]
         public string ParseWithoutTokens(string markDown)
         {
             return LineElement.Parse(markDown);
