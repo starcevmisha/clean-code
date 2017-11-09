@@ -18,6 +18,7 @@ namespace Markdown
         public int Length;
         public int Pos;
         public MarkerType Type;
+        public OpenCloseType OpenCloseTagType;
 
         public Marker(int pos, MarkerType type, int length )
         {
@@ -27,9 +28,12 @@ namespace Markdown
         }
 
 
-        public static Marker CreateTag(string line, int pos)
+        public static Marker CreateTag(string line, int pos, Marker lastTag)
         {
-            if (IsStrongTag(line, pos))
+            var isCorrectStrongCloseTag = !(lastTag != null &&lastTag.Type == MarkerType.Em && Marker.IsOpeningTag(line, lastTag.Pos) &&
+                    Marker.IsClosingTag(line, pos));//Корректное закрывание тегов в случае ___, сначала закрывается одинарный, потом двойной
+
+            if (IsStrongTag(line, pos) && isCorrectStrongCloseTag)
                 return new Marker(pos, MarkerType.Strong, 2);
             if (IsEmTag(line, pos))
                 return new Marker(pos, MarkerType.Em, 1);
@@ -37,6 +41,7 @@ namespace Markdown
                 return new Marker(pos, MarkerType.Code, 2);
             return null;
         }
+
 
         private static bool IsStrongTag(string line, int pos)
         {
@@ -125,5 +130,11 @@ namespace Markdown
         Strong,
         Em,
         Code
+    }
+
+    public enum OpenCloseType
+    {
+        Open,
+        Close
     }
 }
