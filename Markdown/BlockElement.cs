@@ -11,19 +11,33 @@ namespace Markdown
 
         public static string OpenNewBlock(BlockType newBlockType)
         {
-            if (newBlockType == BlockType.Code) return "<pre><code>";
-            if (newBlockType == BlockType.BlockQuotes) return "<blockquote>\n<p>";
-            if (newBlockType == BlockType.List) return "<ul>\n";
-            if (newBlockType == BlockType.Paragraph) return "<p>";
+            switch (newBlockType)
+            {
+                case BlockType.Code:
+                    return "<pre><code>";
+                case BlockType.BlockQuotes:
+                    return "<blockquote>\n<p>";
+                case BlockType.List:
+                    return "<ul>\n";
+                case BlockType.Paragraph:
+                    return "<p>";
+            }
             return "";
         }
 
         public static string CloseLastBlock(BlockType lastBlockType)
         {
-            if (lastBlockType == BlockType.Code) return "</code></pre>";
-            if (lastBlockType == BlockType.List) return "</ul>";
-            if (lastBlockType == BlockType.BlockQuotes) return "</p>\n</blockquote>";
-            if (lastBlockType == BlockType.Paragraph) return "</p>";
+            switch (lastBlockType)
+            {
+                case BlockType.Code:
+                    return "</code></pre>";
+                case BlockType.List:
+                    return "</ul>";
+                case BlockType.BlockQuotes:
+                    return "</p>\n</blockquote>";
+                case BlockType.Paragraph:
+                    return "</p>";
+            }
             return "";
         }
 
