@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using NUnit.Framework;
 
 namespace Markdown
@@ -9,19 +8,6 @@ namespace Markdown
         private static readonly Regex ListRegex = new Regex(@"^(?:\d+\.|\+) (.*)");
         private static readonly Regex BlockQuotesRegex = new Regex(@"^>{1,4} (.+)");
         private static readonly Regex HorizontalRuleRegex = new Regex(@"^(?:\*{3,}|-{3,})$");
-
-        public static string Parse(string line)
-        {
-            var headerLevel = 0;
-            while (line[headerLevel] == '#') headerLevel++;
-            if (headerLevel > 3)
-                return line;
-            var i = line.Length - 1;
-            while (line[i] == '#') i--;
-            return string.Format("<h{0}>{1}</h{0}>",
-                4 - headerLevel,
-                line.Substring(headerLevel, i - headerLevel + 1));
-        }
 
         public static string OpenNewBlock(BlockType newBlockType)
         {
@@ -53,7 +39,7 @@ namespace Markdown
             return BlockType.Empty;
         }
 
-        public static bool IsParagraph(string line)
+        private static bool IsParagraph(string line)
         {
             return !string.IsNullOrEmpty(line);
         }
