@@ -19,13 +19,14 @@ namespace Markdown
                     line = line.Remove(i, 1);
                     continue;
                 }
-                var tag = Marker.CreateTag(line, i, stackTag.Count > 0 ? stackTag.Peek() : null);
-                if (tag == null)
+                if (!Marker.TryCreateTag(line, i,
+                    stackTag.Count > 0 ? stackTag.Peek() : null,
+                    out var tag))
                     continue;
+
                 i += tag.Length - 1;
 
-                if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type)
-                    && !IsRepeatTag(tag, stackTag.Peek())) 
+                if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type) && !IsRepeatTag(tag, stackTag.Peek())) 
                 {
                     var tags = Marker.GetTagsPair(line, tag, stackTag);
                     line = Marker.ConvertToHtmlTag(line, tags.openingTag, tags.closingTag);

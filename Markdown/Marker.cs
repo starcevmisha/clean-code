@@ -28,18 +28,27 @@ namespace Markdown
         }
 
 
-        public static Marker CreateTag(string line, int pos, Marker lastTag)
+        public static bool TryCreateTag(string line, int pos, Marker lastTag, out Marker tag)
         {
             var isCorrectStrongCloseTag = !(lastTag != null &&lastTag.Type == MarkerType.Em && Marker.IsOpeningTag(line, lastTag.Pos) &&
                     Marker.IsClosingTag(line, pos));//Корректное закрывание тегов в случае ___, сначала закрывается одинарный, потом двойной
 
             if (IsStrongTag(line, pos) && isCorrectStrongCloseTag)
-                return new Marker(pos, MarkerType.Strong, 2);
-            if (IsEmTag(line, pos))
-                return new Marker(pos, MarkerType.Em, 1);
+            {
+                tag = new Marker(pos, MarkerType.Strong, 2);
+                return true;
+            }
+            if (IsEmTag(line, pos)) { 
+                tag =  new Marker(pos, MarkerType.Em, 1);
+                return true;
+            }
             if (IsCodeTag(line, pos))
-                return new Marker(pos, MarkerType.Code, 2);
-            return null;
+            {
+                tag =  new Marker(pos, MarkerType.Code, 2);
+                return true;
+            }
+            tag = null;
+            return false;
         }
 
 
