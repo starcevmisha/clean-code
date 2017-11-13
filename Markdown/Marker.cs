@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace Markdown
 {
     public class Marker
     {
-
-        static Dictionary<MarkerType, string> HtmlTags = new Dictionary<MarkerType, string>
+        private static readonly Dictionary<MarkerType, string> HtmlTags = new Dictionary<MarkerType, string>
         {
             {MarkerType.Strong, "<strong>"},
             {MarkerType.Em, "<em>" },
             {MarkerType.Code, "<code>"}
         };
 
-        public int Length;
+        public readonly int Length;
         public int Pos;
-        public MarkerType Type;
-        public OpenCloseType OpenCloseTagType;
+        public readonly MarkerType Type;
 
-        public Marker(int pos, MarkerType type, int length )
+        private Marker(int pos, MarkerType type, int length )
         {
             Pos = pos;
             Type = type;
@@ -30,8 +26,8 @@ namespace Markdown
 
         public static bool TryCreateTag(string line, int pos, Marker lastTag, out Marker tag)
         {
-            var isCorrectStrongCloseTag = !(lastTag != null &&lastTag.Type == MarkerType.Em && Marker.IsOpeningTag(line, lastTag.Pos) &&
-                    Marker.IsClosingTag(line, pos));//Корректное закрывание тегов в случае ___, сначала закрывается одинарный, потом двойной
+            var isCorrectStrongCloseTag = !(lastTag != null &&lastTag.Type == MarkerType.Em && IsOpeningTag(line, lastTag.Pos) &&
+                    IsClosingTag(line, pos));//Корректное закрывание тегов в случае ___, сначала закрывается одинарный, потом двойной
 
             if (IsStrongTag(line, pos) && isCorrectStrongCloseTag)
             {
@@ -82,7 +78,7 @@ namespace Markdown
                 && (pos-1 < 0 || char.IsDigit(line[pos - 1]));
         }
 
-        public static (Marker openingTag, Marker closingTag) GetTagsPair(string line, Marker closingTag, Stack<Marker> stackTag)
+        public static (Marker openingTag, Marker closingTag) GetTagsPair(Marker closingTag, Stack<Marker> stackTag)
         {
             var openingTag = stackTag.Pop();
             while (openingTag.Type != closingTag.Type)
@@ -139,11 +135,5 @@ namespace Markdown
         Strong,
         Em,
         Code
-    }
-
-    public enum OpenCloseType
-    {
-        Open,
-        Close
     }
 }

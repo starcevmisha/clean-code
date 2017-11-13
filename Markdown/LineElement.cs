@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace Markdown
 {
-    public class LineElement
+    public static class LineElement
     {
         public static string Parse(string markdown)
         {
@@ -28,7 +28,7 @@ namespace Markdown
 
                 if (Marker.IsClosingTag(line, tag.Pos) && stackTag.Any(openTag => openTag.Type == tag.Type) && !IsRepeatTag(tag, stackTag.Peek())) 
                 {
-                    var tags = Marker.GetTagsPair(line, tag, stackTag);
+                    var tags = Marker.GetTagsPair(tag, stackTag);
                     line = Marker.ConvertToHtmlTag(line, tags.openingTag, tags.closingTag);
                 }
 
